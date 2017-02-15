@@ -75,14 +75,21 @@ class Service(Module):
 class SysvService(Service):
 
     @property
-    def is_running(self):
+    def is_running(self, _backend):
+        Command = _backend.get_module("Command")
+        if Command.exists("service"):
+            service_bin = 'service'
+        else:
+            # Try a safe fallback, since we don't
+            # use a login shell sometimes
+            service_bin = '/sbin/service'
         # based on /lib/lsb/init-functions
         # 0: program running
         # 1: program is dead and pid file exists
         # 3: not running and pid file does not exists
         # 4: Unable to determine status
         return self.run_expect(
-            [0, 1, 3], "service %s status", self.name).rc == 0
+            [0, 1, 3], "%s %s status", (service_bin, self.name)).rc == 0
 
     @property
     def is_enabled(self):
